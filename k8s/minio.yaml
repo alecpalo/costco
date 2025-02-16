@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: minio-api
-  namespace: private-registry
+  namespace: costco
 spec:
   type: ClusterIP
   ports:
@@ -16,7 +16,7 @@ metadata:
   name: minio-init
   labels:
     app: minio
-  namespace: private-registry
+  namespace: costco
 data:
   start-minio.sh: |
     #!/usr/bin/env bash
@@ -33,7 +33,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: minio-web
-  namespace: private-registry
+  namespace: costco
 spec:
   type: ClusterIP
   ports:
@@ -53,7 +53,7 @@ metadata:
   labels:
     app: minio
   name: minio
-  namespace: private-registry
+  namespace: costco
 spec:
   serviceName: "minio"
   replicas: 1

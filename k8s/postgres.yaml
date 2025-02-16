@@ -4,10 +4,10 @@ metadata:
   name: postgres-secret
   labels:
     app: postgres
-  namespace: private-registry
+  namespace: costco
 data:
   POSTGRES_DB: "private-container-registry"
-  POSTGRES_USER: "pci"
+  POSTGRES_USER: "costco"
   POSTGRES_PASSWORD: "1gMAfO7Xa49TpYHoqtYH"
 ---
 apiVersion: v1
@@ -16,10 +16,10 @@ metadata:
   name: postgres-init
   labels:
     app: postgres
-  namespace: private-registry
+  namespace: costco
 data:
   init-metadata.sql: |
-    CREATE TABLE private_registry
+    CREATE TABLE costco
     (
         catalog_name               VARCHAR(255) NOT NULL,
         table_namespace            VARCHAR(255) NOT NULL,
@@ -33,7 +33,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres
-  namespace: private-registry
+  namespace: costco
 spec:
   type: ClusterIP
   ports:
@@ -45,7 +45,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
-  namespace: private-registry
+  namespace: costco
 spec:
   replicas: 1
   selector:

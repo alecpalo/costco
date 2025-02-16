@@ -1,34 +1,34 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: private-registry
-  namespace: private-registry
+  name: costco
+  namespace: costco
 spec:
   type: ClusterIP
   ports:
     - port: 8080
   selector:
-    app: private-registry
+    app: costco
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: private-registry
+  name: costco
   labels:
-    app: private-registry
+    app: costco
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: private-registry
+      app: costco
   template:
     metadata:
-      name: private-registry
+      name: costco
       labels:
-        app: private-registry
+        app: costco
     spec:
       containers:
-        - name: private-registry
-          image: private-registry
+        - name: costco
+          image: costco
           imagePullPolicy: Never
       restartPolicy: Always
