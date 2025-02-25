@@ -1,4 +1,4 @@
-FROM golang:1.21 AS builder
+FROM golang:1.24 AS builder
 
 WORKDIR /app
 
@@ -7,14 +7,14 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o myapp
+RUN go build -o costco cmd/costco/main.go
 
 FROM debian:bookworm-slim
 
 WORKDIR /root/
 
-COPY --from=builder /app/myapp .
+COPY --from=builder /app/costco .
 
 EXPOSE 8080
 
-CMD ["./myapp"]
+CMD ["./costco"]

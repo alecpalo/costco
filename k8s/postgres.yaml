@@ -28,6 +28,12 @@ data:
         previous_metadata_location VARCHAR(1000),
         PRIMARY KEY (catalog_name, table_namespace, table_name)
     );
+
+    CREATE TABLE costco(
+      tag VARCHAR(255),
+      name VARCHAR(255),
+      hash VARCHAR(255),
+    );
 ---
 apiVersion: v1
 kind: Service
@@ -59,7 +65,7 @@ spec:
       containers:
         - name: postgres
           image: 'postgres:14'
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 5432
           envFrom:
