@@ -29,3 +29,7 @@ are purely for development purposes and should be changed for a production setup
 ## Design
 
 This container registry is backed by an S3 like storage system, Minio for example, and uses a Postgres database to store metadata.
+
+## Server
+
+To see the endpoints the server must implement in order to be used see [this](https://distribution.github.io/distribution/spec/api/) link.
