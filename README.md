@@ -25,6 +25,7 @@ are purely for development purposes and should be changed for a production setup
 - [ ] Pull containers
 - [ ] Read through cache
 - [ ] Auth
+- [ ] Compatible with the Docker api
 
 ## Design
 
