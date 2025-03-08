@@ -6,6 +6,7 @@ import (
 	"costco/internal/storage"
 	"costco/internal/storage/filesystem"
 	"fmt"
+	"sigs.k8s.io/yaml"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
@@ -19,42 +20,49 @@ import (
 
 // Registry is an object containing all required fields for the container registry
 type Registry struct {
-	g *gin.Engine
-	s storage.Storage
-	a Authenticator
-	k *kubernetes.Clientset
+	web   *gin.Engine
+	store storage.Store
+	auth  Authenticator
+	k8s   *kubernetes.Clientset
 }
 
 // ParseConfigs takes in the data from the costco configs ConfigMap and returns
-// an storage implementation, authenticator and an error. Upon success returning nil.
+// a storage implementation, authenticator and an error. Upon success returning nil.
 // If more than one storage or authenticator is specified ParseConfigs will return an
 // error. If there is an error initializing the interfaces, ParseConfigs will return an error.
-func ParseConfigs(configs map[string]string) (storage.Storage, Authenticator, error) {
+func ParseConfigs(configs map[string]string) (storage.Store, Authenticator, error) {
 	var auth Authenticator
-	var store storage.Storage
+	var store storage.Store
 
-	storageType, ok := configs["storage"]
+	yamlConfigs, ok := configs["configs.yaml"]
 	if !ok {
-		return nil, nil, errNoStorageSpecified
+		return nil, nil, fmt.Errorf("configs.yaml not found in configs.yaml")
 	}
 
-	switch storageType {
+	var costcoConfigs Configs
+	err := yaml.Unmarshal([]byte(yamlConfigs), &costcoConfigs)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	switch costcoConfigs.Storage.kind {
 	case S3:
 		fmt.Println("s3 like storage")
 	case FILESYSTEM:
-		store = filesystem.Init()
+		if costcoConfigs.Storage.FileSystemConfig == nil {
+			return nil, nil, errNoStorageSpecified
+		}
+		store = filesystem.Init(costcoConfigs.Storage.FileSystemConfig.filePath)
 	default:
 		return nil, nil, errInvalidStorageType
 	}
 
-	authType, ok := configs["auth"]
-	if !ok {
-		return nil, nil, errNoAuthSpecified
-	}
-
-	switch authType {
+	switch costcoConfigs.Auth.kind {
 	case BASIC:
-		basicAuth := InitBasicClient()
+		if costcoConfigs.Auth.BasicAuthConfig == nil {
+			return nil, nil, errNoAuthSpecified
+		}
+		basicAuth := InitBasicClient(costcoConfigs.Auth.BasicAuthConfig.Username, costcoConfigs.Auth.BasicAuthConfig.Password)
 		auth = &basicAuth
 	default:
 		return nil, nil, errInvalidAuthType
@@ -117,15 +125,15 @@ func Init(cmd *cobra.Command) Registry {
 		klog.Fatal(err)
 	}
 
-	storage, auth, err := ParseConfigs(configs.Data)
+	store, auth, err := ParseConfigs(configs.Data)
 
 	g := gin.Default()
 
 	r := Registry{
-		g: g,
-		s: storage,
-		a: auth,
-		k: kClient,
+		web:   g,
+		store: store,
+		auth:  auth,
+		k8s:   kClient,
 	}
 
 	return r
@@ -134,28 +142,28 @@ func Init(cmd *cobra.Command) Registry {
 // RegisterEndpoints registers all endpoints for the container registry
 func (r *Registry) RegisterEndpoints() {
 
-	v2 := r.g.Group("/v2")
+	v2 := r.web.Group("/v2")
 	{
-		v2.GET("/", r.a.Authenticate(), r.CheckV2)
+		v2.GET("/", r.auth.Authenticate(), r.CheckV2)
 
-		v2.GET("/:name/tag/list", r.a.Authenticate(), r.ListTags)
+		v2.GET("/:name/tag/list", r.auth.Authenticate(), r.ListTags)
 
-		v2.GET("/:name/manifests/:reference", r.a.Authenticate(), r.PullManifest)
-		v2.DELETE("/:name/manifests/:reference", r.a.Authenticate(), r.DeleteManifest)
-		v2.HEAD("/:name/manifests/:reference", r.a.Authenticate(), r.CheckManifest)
+		v2.GET("/:name/manifests/:reference", r.auth.Authenticate(), r.PullManifest)
+		v2.DELETE("/:name/manifests/:reference", r.auth.Authenticate(), r.DeleteManifest)
+		v2.HEAD("/:name/manifests/:reference", r.auth.Authenticate(), r.CheckManifest)
 
-		v2.GET("/:name/blobs/:digest", r.a.Authenticate(), r.GetBlob)
-		v2.DELETE("/:name/blobs/:digest", r.a.Authenticate(), r.DeleteBlob)
-		v2.HEAD("/:name/blobs/:digest", r.a.Authenticate(), r.CheckLayer)
+		v2.GET("/:name/blobs/:digest", r.auth.Authenticate(), r.GetBlob)
+		v2.DELETE("/:name/blobs/:digest", r.auth.Authenticate(), r.DeleteBlob)
+		v2.HEAD("/:name/blobs/:digest", r.auth.Authenticate(), r.CheckLayer)
 
-		v2.POST("/:name/blobs/uploads", r.a.Authenticate(), r.StartUpload)
+		v2.POST("/:name/blobs/uploads", r.auth.Authenticate(), r.StartUpload)
 
-		v2.GET("/:name/blobs/uploads/:uuid", r.a.Authenticate(), r.CheckUpload)
-		v2.PATCH("/:name/blobs/uploads/:uuid", r.a.Authenticate(), r.UploadLayer)
-		v2.PUT("/:name/blobs/uploads/:uuid", r.a.Authenticate(), r.CompleteUpload)
-		v2.DELETE("/:name/blobs/uploads/:uuid", r.a.Authenticate(), r.CancelUpload)
+		v2.GET("/:name/blobs/uploads/:uuid", r.auth.Authenticate(), r.CheckUpload)
+		v2.PATCH("/:name/blobs/uploads/:uuid", r.auth.Authenticate(), r.UploadLayer)
+		v2.PUT("/:name/blobs/uploads/:uuid", r.auth.Authenticate(), r.CompleteUpload)
+		v2.DELETE("/:name/blobs/uploads/:uuid", r.auth.Authenticate(), r.CancelUpload)
 
-		v2.GET("_catalogs", r.a.Authenticate(), r.GetRepos)
+		v2.GET("_catalogs", r.auth.Authenticate(), r.GetRepos)
 
 		v2.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
@@ -163,5 +171,8 @@ func (r *Registry) RegisterEndpoints() {
 
 // Start runs the API server.
 func (r *Registry) Start() {
-	r.g.Run()
+	err := r.web.Run()
+	if err != nil {
+		klog.Fatal(err)
+	}
 }

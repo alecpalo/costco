@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// CheckV2
 // @Summary Checks whether the registry implements the v2 api
 // @Description Checks whether the registry implements the v2 api
 // @Success 200
@@ -13,6 +14,7 @@ func (r *Registry) CheckV2(c *gin.Context) {
 
 }
 
+// PullManifest
 // @Summary Fetch an image manifest by name and reference
 // @Description Fetches the manifest of an image identified by its name and reference (which can include a tag or digest).
 // @Tags Images
@@ -60,7 +62,7 @@ func (r *Registry) DeleteBlob(c *gin.Context) {
 
 }
 
-// CheckLayers checks for the existence of a layer.
+// CheckLayer checks for the existence of a layer.
 // @Summary Check the existence of an image layer by digest
 // @Description Checks if an image layer, identified by its digest, exists in the registry. If available, it returns a 200 OK response with metadata about the layer.
 // @Tags Images
@@ -102,6 +104,7 @@ func (r *Registry) StartUpload(c *gin.Context) {
 // Content-Type: application/octet-stream
 // <Layer Chunk Binary Data>
 
+// UploadLayer
 // @Summary Initiates an image layer upload
 // @Description Starts the process of uploading an image layer. A successful request will return a 202 Accepted response with an upload URL for continuing the process.
 // @Accept  application/json
@@ -145,6 +148,7 @@ func (r *Registry) CheckUpload(c *gin.Context) {
 
 }
 
+// ListTags
 // @Summary List all tags for a given image repository
 // @Description Retrieves the list of tags associated with a given image repository. For repositories with a large number of tags, pagination is supported to handle large responses.
 // @Tags tags
@@ -162,6 +166,7 @@ func (r *Registry) ListTags(c *gin.Context) {
 
 }
 
+// DeleteManifest
 // @Summary Delete an image from the registry
 // @Description Deletes an image from the registry by its name and reference (digest).  A successful delete will return a 202 Accepted response. If the image is already deleted or does not exist, a 404 Not Found will be returned.
 // @Tags images

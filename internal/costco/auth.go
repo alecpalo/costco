@@ -14,10 +14,10 @@ type Authenticator interface {
 
 // InitBasicClient returns a basic auth client with a username and password
 // statically assigned.
-func InitBasicClient() BasicClient {
+func InitBasicClient(username, password string) BasicClient {
 	b := BasicClient{
-		Username: "admin",
-		Password: "password",
+		Username: username,
+		Password: password,
 	}
 
 	return b

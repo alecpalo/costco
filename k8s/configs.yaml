@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: costco-configs
+  namespace: costco
+data:
+  configs.yaml: |
+    store:
+    - kind: fs
+      base-path: /data/repo
+    auth:
+    - kind: basic
+      username: admin
+      password: roo

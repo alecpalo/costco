@@ -49,3 +49,31 @@ var (
 	errNoAuthSpecified    = errors.New("error, no auth type specified")
 	errInvalidAuthType    = errors.New("error, auth type specified invalid")
 )
+
+type BasicAuthConfig struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
+
+type FileSystemConfig struct {
+	filePath string `yaml:"filePath"`
+}
+
+type MinioConfig struct {
+}
+
+type StoreConfig struct {
+	kind             string            `yaml:"kind"`
+	FileSystemConfig *FileSystemConfig `yaml:"fsConfig"`
+	MinioConfig      *MinioConfig      `yaml:"minioConfig"`
+}
+
+type AuthConfig struct {
+	kind            string           `yaml:"kind"`
+	BasicAuthConfig *BasicAuthConfig `yaml:"basicAuthConfig"`
+}
+
+type Configs struct {
+	Storage StoreConfig `yaml:"storage"`
+	Auth    AuthConfig  `yaml:"auth"`
+}

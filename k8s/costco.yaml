@@ -32,15 +32,3 @@ spec:
           image: costco
           imagePullPolicy: Never
       restartPolicy: Always
----
-apiVersion: v1
-kind: ConfigMap
-metadata: 
-  name: costco-configs
-  namespace: costco
-data:
-  storage: fs
-  auth: client
-  auth-secret-name: client-key
-  auth-username: admin
-  auth-password: password
