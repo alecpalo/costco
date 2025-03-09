@@ -2,6 +2,7 @@ package costco
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // CheckV2
@@ -11,7 +12,7 @@ import (
 // @Failure 400 {object} <response-type> "Error message"
 // @Router / [GET]
 func (r *Registry) CheckV2(c *gin.Context) {
-
+	c.JSON(200, gin.H{"status": "OK"})
 }
 
 // PullManifest
@@ -88,7 +89,25 @@ func (r *Registry) CheckLayer(c *gin.Context) {
 // @Failure 400 {object} Error "Invalid request parameters"
 // @Router /{name}/blobs/uploads [POST]
 func (r *Registry) StartUpload(c *gin.Context) {
+	id := uuid.New()
+	name := c.Param("name")
 
+	// check for the repository
+	if r.CheckRepository(c, name) {
+		return
+	}
+
+	// if there is a digest, this is a monolithic upload
+	digest := c.Query("digest")
+	if digest != "" {
+		r.UploadMonolith(c, name)
+		return
+	}
+
+	// "create" route to be used for a chunk upload
+	url := "/v2/" + name + "/blobs/uploads/" + id.String()
+	c.Header("Location", url)
+	c.Status(202)
 }
 
 // For monolithic uploads:

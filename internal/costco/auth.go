@@ -1,8 +1,6 @@
 package costco
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -39,7 +37,7 @@ func (b *BasicClient) Authenticate() gin.HandlerFunc {
 		if !hasAuth || username != b.Username || password != b.Password {
 			// Send RFC 7235 compliant response
 			c.Header("WWW-Authenticate", `Basic realm="Restricted Area"`)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": UNAUTHORIZED})
+			c.JSON(401, gin.H{"error": "Unauthorized"})
 			return
 		}
 

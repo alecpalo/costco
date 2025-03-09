@@ -37,8 +37,12 @@ type ImageManifest struct {
 	Signature string     `json:"signature"`
 }
 
-type RegistryError struct {
-	Code    string `json:"code"`
+type ErrorResponse struct {
+	Errors []Error `json:"errors"`
+}
+
+type Error struct {
+	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Detail  string `json:"detail"`
 }
@@ -48,6 +52,7 @@ var (
 	errInvalidStorageType = errors.New("error, storage type specified invalid")
 	errNoAuthSpecified    = errors.New("error, no auth type specified")
 	errInvalidAuthType    = errors.New("error, auth type specified invalid")
+	errRepositoryNotFound = errors.New("error, repository not found")
 )
 
 type BasicAuthConfig struct {
