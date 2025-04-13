@@ -139,7 +139,21 @@ func (r *Registry) StartUpload(c *gin.Context) {
 // @Failure 404 {object} ErrorResponse "Not Found"
 // @Router /{name}/blobs/uploads/{uuid} [PATCH]
 func (r *Registry) UploadLayer(c *gin.Context) {
+	name := c.Param("name")
+	id, err := uuid.Parse(c.Param("uuid"))
+	if err != nil {
+		// todo make this real
+		panic(err)
+	}
 
+	// check for the repository
+	if r.CheckRepository(c, name) {
+		return
+	}
+
+	r.UploadChunk(id, c)
+
+	c.Status(202)
 }
 
 // CancelUpload cancels an upload of an image.

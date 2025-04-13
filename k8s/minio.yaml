@@ -20,7 +20,7 @@ metadata:
 data:
   start-minio.sh: |
     #!/usr/bin/env bash
-    minio server /data --console-address :9090 &
+    s3 server /data --console-address :9090 &
 
     sleep 5
 
@@ -55,7 +55,7 @@ metadata:
   name: minio
   namespace: costco
 spec:
-  serviceName: "minio"
+  serviceName: "s3"
   replicas: 1
   selector:
     matchLabels:
@@ -66,13 +66,13 @@ spec:
         app: minio
     spec:
       containers:
-        - name: minio
+        - name: s3
           image: quay.io/minio/minio:latest
           command:
             - /bin/bash
             - -c
           args:
-            - bash /minio-init/start-minio.sh
+            - bash /s3-init/start-s3.sh
           env:
             - name: MINIO_ACCESS_KEY
               value: xl9pfuASxMm2cKEXkfdD
@@ -81,8 +81,8 @@ spec:
           volumeMounts:
             - mountPath: /data
               name: localvolume # Corresponds to the `spec.volumes` Persistent Volume
-            - name: minio-init
-              mountPath: "/minio-init"
+            - name: s3-init
+              mountPath: "/s3-init"
               readOnly: true
           ports:
             - containerPort: 9000
@@ -90,8 +90,8 @@ spec:
       volumes:
         - name: localvolume
           hostPath: # MinIO generally recommends using locally-attached volumes
-            path: /var/lib/minikube/minio # Specify a path to a local drive or volume on the Kubernetes worker node
+            path: /var/lib/minikube/s3 # Specify a path to a local drive or volume on the Kubernetes worker node
             type: DirectoryOrCreate # The path to the last directory must exist
-        - name: minio-init
+        - name: s3-init
           configMap:
             name: minio-init

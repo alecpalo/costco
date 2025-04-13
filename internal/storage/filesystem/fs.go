@@ -3,62 +3,50 @@ package filesystem
 import (
 	"io"
 	"os"
-	"path/filepath"
 )
 
-type FileSystem struct {
-	filePath string
+// file is an interface for mocking the outputs from fs
+type file interface {
+	io.Closer
+	io.Reader
+	io.ReaderAt
+	io.Seeker
+	Stat() (os.FileInfo, error)
+	Write(b []byte) (int, error)
 }
 
-func Init(fp string) *FileSystem {
-	fs := FileSystem{
-		filePath: fp,
-	}
-	return &fs
+// fs is an interface for mocking file system functions. This does not include
+// close as I don't care about it.
+type fs interface {
+	Open(name string) (file, error)
+	Stat(name string) (os.FileInfo, error)
+	Mkdir(name string, perm os.FileMode) error
+	OpenFile(name string, flag int, perm os.FileMode) (file, error)
 }
 
-// PutObject takes in a key and a reader object and attempts to write the object
-// to the provided location in the filesystem. Upon success returning nil, upon
-// failure returning an error.
-func (fs *FileSystem) PutObject(key string, data io.Reader) error {
-	writePath := filepath.Join(fs.filePath, key)
-	var bytes []byte
-
-	_, err := data.Read(bytes)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(writePath, bytes, os.ModePerm)
-
-	return err
+// filesystem is the implementation of fs with basic os functions.
+type filesystem struct {
 }
 
-// GetObject takes in a key and attempts to read the file from that location
-// returning a reader and an error.
-func (fs *FileSystem) GetObject(key string) (io.ReadCloser, error) {
-	readPath := filepath.Join(fs.filePath, key)
-
-	return os.Open(readPath)
+func (f *filesystem) OpenFile(name string, flag int, perm os.FileMode) (file, error) {
+	return os.OpenFile(name, flag, perm)
 }
 
-func (fs *FileSystem) DeleteObject(key string) error {
-	return nil
+// Open takes in a filepath and attempts to open it, returning
+// a file and nil upon success. If the file cannot be found or there is an
+// error while opening the file it will return an error.
+func (f *filesystem) Open(name string) (file, error) {
+	return os.Open(name)
 }
 
-func (fs *FileSystem) ListObjects(key string) ([]string, error) {
-	return nil, nil
+// Stat takes in a filepath and attempts to get the file info from that path.
+// If there is an error finding the filepath, it will return an error.
+func (f *filesystem) Stat(name string) (os.FileInfo, error) {
+	return os.Stat(name)
 }
 
-// FindObject attempts to find the file stored at key, returning true if
-// is successfully found otherwise false or an error.
-func (fs *FileSystem) FindObject(key string) bool {
-	searchPath := filepath.Join(fs.filePath, key)
-
-	_, err := os.Stat(searchPath)
-	if err != nil {
-		return false
-	}
-
-	return true
+// Mkdir takes in a file path and attempts to create a directory with the given
+// permissions. If the directory exists or cannot be made, an error is returned.
+func (f *filesystem) Mkdir(name string, perm os.FileMode) error {
+	return os.Mkdir(name, perm)
 }
