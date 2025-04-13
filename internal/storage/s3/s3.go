@@ -37,9 +37,9 @@ func Init() *S3 {
 	return &s
 }
 
-// StartMultiPartLayer starts a multipart layer upload, returning the uuid of the upload
+// StartMultiPartUpload starts a multipart layer upload, returning the uuid of the upload
 // and an error, if any occurred throughout the process.
-func (s *S3) StartMultiPartLayer(key string) (uuid.UUID, error) {
+func (s *S3) StartMultiPartUpload(key string) (uuid.UUID, error) {
 	input := &s3.CreateMultipartUploadInput{
 		Bucket:            aws.String(s.bucket),
 		Key:               aws.String(key),
@@ -134,7 +134,7 @@ func (s *S3) PutLayer(key string, data io.Reader) error {
 	return nil
 }
 
-func (s *S3) DeleteLayers(key string) error {
+func (s *S3) DeleteLayer(key string) error {
 	return nil
 }
 
@@ -146,18 +146,22 @@ func (s *S3) FindLayer(key string) (bool, error) {
 	return false, nil
 }
 
-func (s *S3) CreateManifest() error {
+func (s *S3) CreateImage() error {
 	return nil
 }
 
-func (s *S3) DeleteManifest() error {
+func (s *S3) DeleteImage() error {
 	return nil
 }
 
-func (s *S3) GetManifest() error {
+func (s *S3) GetImage() error {
 	return nil
 }
 
-func (s *S3) FindManifest() error {
+func (s *S3) FindImage() error {
 	return nil
+}
+
+func (s *S3) FindRepo(repo string) (bool, error) {
+	return false, nil
 }

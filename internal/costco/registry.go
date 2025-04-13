@@ -4,7 +4,7 @@ import (
 	"context"
 	_ "costco/docs/swag"
 	"costco/internal/storage"
-	"costco/internal/storage/filesystem"
+	"costco/internal/storage/s3"
 	"fmt"
 	"sigs.k8s.io/yaml"
 
@@ -47,12 +47,12 @@ func ParseConfigs(configs map[string]string) (storage.Store, Authenticator, erro
 
 	switch costcoConfigs.Storage.kind {
 	case S3:
-		fmt.Println("s3 like storage")
+		store = s3.Init()
 	case FILESYSTEM:
 		if costcoConfigs.Storage.FileSystemConfig == nil {
 			return nil, nil, errNoStorageSpecified
 		}
-		store = filesystem.Init(costcoConfigs.Storage.FileSystemConfig.filePath)
+		//store = filesystem.Init(costcoConfigs.Storage.FileSystemConfig.filePath)
 	default:
 		return nil, nil, errInvalidStorageType
 	}
@@ -126,6 +126,9 @@ func Init(cmd *cobra.Command) Registry {
 	}
 
 	store, auth, err := ParseConfigs(configs.Data)
+	if err != nil {
+		klog.Fatal(err)
+	}
 
 	g := gin.Default()
 

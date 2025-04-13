@@ -1,13 +1,13 @@
 package costco
 
 import (
+	"costco/internal/utils"
 	"crypto/sha256"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"io"
 	"path/filepath"
-	"strconv"
 )
 
 func (r *Registry) Checksum(data []byte) string {
@@ -17,7 +17,8 @@ func (r *Registry) Checksum(data []byte) string {
 // CheckRepository takes in gin Context and a repository, validating that the repository
 // exits, updating the gin context with the correct errors if it does not.
 func (r *Registry) CheckRepository(c *gin.Context, repo string) bool {
-	if !r.store.FindObject(repo) {
+	found, err := r.store.FindRepo(repo)
+	if !found || err != nil {
 		costcoErr := Error{
 			Code:    404,
 			Message: errRepositoryNotFound.Error(),
@@ -56,17 +57,16 @@ func (r *Registry) UploadMonolith(c *gin.Context, repo string) {
 	// file paths for layers should be blobs/<hash>
 	key := filepath.Join("blobs", checksum)
 
-	r.store.PutObject(key, c.Request.Body)
+	err = r.store.PutLayer(key, c.Request.Body)
+	if err != nil {
+		// todo do a thing
+	}
 }
 
 // UploadChunk uploads a chunk of a layer
 func (r *Registry) UploadChunk(id uuid.UUID, c *gin.Context) {
 	byteRange := c.GetHeader("Range")
-	length, err := strconv.Atoi(c.GetHeader("Content-Length"))
-	if err != nil {
-		panic(err)
-	}
-
+	name := c.Param("name")
 	digest := c.Query("digest")
 
 	body, err := io.ReadAll(c.Request.Body)
@@ -89,5 +89,13 @@ func (r *Registry) UploadChunk(id uuid.UUID, c *gin.Context) {
 		return
 	}
 
-	r.store.PutChunk(byteRange, length, id, c.Request.Body)
+	partNumber, err := utils.ConvertOffset(byteRange)
+	if err != nil {
+		// todo do a thing
+	}
+
+	err = r.store.PutChunk(name, id, partNumber, c.Request.Body)
+	if err != nil {
+		// todo do a thing
+	}
 }

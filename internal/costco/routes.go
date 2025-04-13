@@ -89,7 +89,6 @@ func (r *Registry) CheckLayer(c *gin.Context) {
 // @Failure 400 {object} Error "Invalid request parameters"
 // @Router /{name}/blobs/uploads [POST]
 func (r *Registry) StartUpload(c *gin.Context) {
-	id := uuid.New()
 	name := c.Param("name")
 
 	// check for the repository
@@ -102,6 +101,12 @@ func (r *Registry) StartUpload(c *gin.Context) {
 	if digest != "" {
 		r.UploadMonolith(c, name)
 		return
+	}
+
+	// if it is not a monolithic upload, get the ID
+	id, err := r.store.StartMultiPartUpload(name)
+	if err != nil {
+		// TODO do something here
 	}
 
 	// "create" route to be used for a chunk upload

@@ -8,13 +8,13 @@ import (
 	"path/filepath"
 )
 
-type Store struct {
+type FileSystem struct {
 	filePath string
 	fs       fs
 }
 
-func Init(fp string) *Store {
-	fs := Store{
+func Init(fp string) *FileSystem {
+	fs := FileSystem{
 		filePath: fp,
 		fs:       &filesystem{},
 	}
@@ -24,7 +24,7 @@ func Init(fp string) *Store {
 // PutChunk puts a chunk into a staging location until all chunks have been created
 // and expects the key, id that is uploaded to and the data itself. Upon success
 // this function returns nil and upon failure it returns an error.
-func (s *Store) PutChunk(offset string, length int, id uuid.UUID, data io.Reader) error {
+func (s *FileSystem) PutChunk(offset string, length int, id uuid.UUID, data io.Reader) error {
 	// todo: make this a real thing
 	path := filepath.Join(s.filePath, "temp", id.String())
 	info, err := s.fs.Stat(path)
@@ -62,7 +62,7 @@ func (s *Store) PutChunk(offset string, length int, id uuid.UUID, data io.Reader
 // PutObject takes in a key and a reader object and attempts to write the object
 // to the provided location in the filesystem. Upon success returning nil, upon
 // failure returning an error.
-func (s *Store) PutObject(key string, data io.Reader) error {
+func (s *FileSystem) PutObject(key string, data io.Reader) error {
 	writePath := filepath.Join(s.filePath, key)
 	var bytes []byte
 
@@ -78,23 +78,23 @@ func (s *Store) PutObject(key string, data io.Reader) error {
 
 // GetObject takes in a key and attempts to read the file from that location
 // returning a reader and an error.
-func (s *Store) GetObject(key string) (io.ReadCloser, error) {
+func (s *FileSystem) GetObject(key string) (io.ReadCloser, error) {
 	readPath := filepath.Join(s.filePath, key)
 
 	return os.Open(readPath)
 }
 
-func (s *Store) DeleteObject(key string) error {
+func (s *FileSystem) DeleteObject(key string) error {
 	return nil
 }
 
-func (s *Store) ListObjects(key string) ([]string, error) {
+func (s *FileSystem) ListObjects(key string) ([]string, error) {
 	return nil, nil
 }
 
 // FindObject attempts to find the file stored at key, returning true if
 // is successfully found otherwise false or an error.
-func (s *Store) FindObject(key string) bool {
+func (s *FileSystem) FindObject(key string) bool {
 	searchPath := filepath.Join(s.filePath, key)
 
 	_, err := os.Stat(searchPath)

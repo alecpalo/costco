@@ -19,15 +19,17 @@ import (
 
 // Store is the interface for the object store for the container registry
 type Store interface {
-	PutChunk(offset string, length int, id uuid.UUID, data io.Reader) error
-	CompleteLayer() error
+	PutChunk(key string, id uuid.UUID, partNumber int32, data io.Reader) error
+	StartMultiPartUpload(key string) (uuid.UUID, error)
+	CompleteLayer(key string, id uuid.UUID) error
 	PutLayer(key string, data io.Reader) error
 	GetLayer(key string) (io.ReadCloser, error)
 	DeleteLayer(key string) error
 	ListLayers(key string) ([]string, error)
-	FindLayer(key string) bool
+	FindLayer(key string) (bool, error)
 	CreateImage() error
 	DeleteImage() error
 	GetImage() error
 	FindImage() error
+	FindRepo(repo string) (bool, error)
 }
